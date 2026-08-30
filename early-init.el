@@ -97,6 +97,13 @@ PGTK is the Wayland-specific build of Emacs.")
 ;; packages to work with, requiring a `package-refresh-contents'.
 (setq package-enable-at-startup t)
 
+;; Load `compile' up front so `define-compilation-mode' is available when
+;; package activation runs the typst-ts-mode autoloads.  An upstream bug
+;; inlines (define-compilation-mode ...) into typst-ts-mode-autoloads.el
+;; without requiring `compile', which used to raise "Error loading
+;; autoloads: (void-function define-compilation-mode)" at startup.
+(require 'compile)
+
 (setq user-lisp-directory (locate-user-emacs-file "jp-lisp/"))
 
 (add-hook 'after-init-hook (lambda () (set-frame-name "home")))
