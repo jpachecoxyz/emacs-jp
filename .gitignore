@@ -9,3 +9,6 @@
 /tramp
 /bookmarks
 /auto-save-list/
+/var/
+/elfeed/
+/.last-package-update-day

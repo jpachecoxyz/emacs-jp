@@ -32,6 +32,11 @@
 ;; Disable the damn thing by making it disposable.
 (setq custom-file (make-temp-file "emacs-custom-"))
 
+;; Treat every theme as safe, so `load-theme' does not prompt for
+;; confirmation (without this, the custom-file being a temp file means
+;; `custom-safe-themes' is re-emptied on every start).
+(setq custom-safe-themes t)
+
 (setq default-input-method "spanish-prefix") ; also check "greek-postfix"
 (setq default-transient-input-method "spanish-prefix")
 
