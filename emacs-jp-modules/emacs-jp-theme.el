@@ -20,6 +20,7 @@
 
 ;;;; Pulsar
 (use-package pulsar
+  :demand t
   :config
   (pulsar-global-mode 1)
 
@@ -75,7 +76,11 @@
     (setq x-underline-at-descent-line (when spacious-padding-subtle-frame-lines t))))
 
 ;;;; Fontaine (font configurations)
+;; `:demand t' so the preset is applied eagerly at startup.  Without it,
+;; the `:bind' keyword defers loading, so `:config' (which calls
+;; `fontaine-set-preset') never runs and the configured font is not set.
 (use-package fontaine
+  :demand t
   :config
   (fontaine-mode 1)
 
