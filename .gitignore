@@ -1,0 +1,11 @@
+# Package archives and caches
+/elpa/
+/eln-cache/
+
+# Emacs runtime/state files
+/jp-register.eld
+/savehist
+/recentf
+/tramp
+/bookmarks
+/auto-save-list/

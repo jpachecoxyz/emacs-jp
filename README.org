@@ -1,0 +1,75 @@
+#+TITLE: emacs-jp
+#+AUTHOR: Javier
+#+EMAIL: jp
+#+STARTUP: content
+
+* About
+
+`emacs-jp' is my Emacs configuration.  It is a from-scratch reorganisation of
+my setup, migrating away from the Protesilaos-style custom macros
+(`jp-emacs-install', `jp-emacs-hook', `jp-emacs-keybind', ...) and towards the
+native, standard Emacs way of doing things: `use-package' everywhere, package
+archives for installation and `use-package :vc' for packages fetched straight
+from git.
+
+The configuration content is kept nearly identical to the original; what
+changed is the plumbing that sources and installs the packages.
+
+This is an independent project (it is *not* symlinked into
+`~/.config/emacs').  The older configuration still lives at `~/.config/emacs'
+and remains usable as a fallback.
+
+* Installation / startup
+
+Run Emacs with this directory as the configuration directory:
+
+#+begin_src sh
+emacs --init-directory /home/javier/.local/src/emacs-jp
+#+end_src
+
+On first start, `use-package' installs any missing packages (see
+~emacs-jp-00-requirements.el~ and the `:ensure' policy below).
+
+* Layout
+
+- ~init.el~ :: The entry point.  Sets up load paths, package archives and
+  `use-package', defines the user-toggle options, then loads every module in
+  order.
+- ~early-init.el~ :: Runs before the rest of the startup; sets things up as
+  early as possible (verbatim copy of the original).
+- ~emacs-jp-lisp/~ :: My own Emacs Lisp helpers (~jp-*.el~).  These keep their
+  internal ~jp-*~ symbol naming so that all the ~(require 'jp-...)~ they use
+  keep working.  They are not installation concerns.
+- ~emacs-jp-modules/~ :: The per-area modules (~emacs-jp-<area>.el~) that do
+  the actual configuration with `use-package'.
+- ~emacs-jp-00-requirements.el~ :: The package list and the `:vc' git
+  installations (typst-ts-mode from Codeberg, pixel-themes and buffer-to-pdf
+  from GitHub).
+- ~emacs-jp-pre-custom.el~ / ~emacs-jp-post-custom.el~ :: Optional user files,
+  loaded ~before~ / ~after~ all modules.  If absent they are silently skipped
+  (~:no-error~).  Use them to set preferences or run arbitrary code without
+  editing a module.
+
+* Installation policy
+
+- ~use-package-always-ensure t~ is set globally in ~init.el~, so a bare
+  ~(use-package foo ...)~ installs ~foo~ if it is missing.
+- Packages that must come from a git repository declare ~:vc~ explicitly
+  (in ~emacs-jp-00-requirements.el~).
+- Personal/self packages are pinned to ~gnu-elpa-devel~ via
+  ~jp-emacs-my-packages~ and ~package-pinned-packages~.
+
+* Theme family
+
+The active theme family is controlled by ~jp-emacs-load-theme-family~
+(default ~ef~).  Supported families: ~modus~, ~ef~ and ~standard~.
+
+* Notes / semantics
+
+- Internal function and variable names in the ~emacs-jp-lisp/~ helpers remain
+  prefixed with ~jp-~ for compatibility with the original libraries.
+- Some modules (~email~, ~notmuch~, ~gnus~, ~hugo~, ~lsp~, ~treesitter~,
+  ~ollama~) exist in ~emacs-jp-modules/~ but are not enabled in ~init.el~'s
+  require list.
+- Several settings carry comments noting which Emacs version (28/29/30/31)
+  they apply to, preserving the original's guard logic.
