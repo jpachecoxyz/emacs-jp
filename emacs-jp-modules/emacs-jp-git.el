@@ -229,11 +229,11 @@
 (setq transient-show-popup 0.5)
 
 (use-package magit
+  :defer t
+  :bind (("C-c g" . magit-status))
   :config
   ;; Let `display-buffer-alist' do its job.
   (setq magit-display-buffer-function #'display-buffer)
-
-  (define-key global-map (kbd "C-c g") #'magit-status)
 
   (with-eval-after-load 'magit
     (define-key magit-mode-map (kbd "C-w") nil)

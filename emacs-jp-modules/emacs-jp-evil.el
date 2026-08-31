@@ -8,6 +8,21 @@
 
 ;;; Code:
 
+;; Set the Evil state tags (and the mode line format) BEFORE enabling
+;; `evil-mode'.  `evil-refresh-mode-line' caches the tag in
+;; `evil-mode-line-tag' when the mode is enabled, so if these are set
+;; afterwards the mode line only gets the default "<N>" tag until some
+;; later state transition regenerates it (e.g. when pressing ESC).
+(setq evil-mode-line-format nil)
+
+(setq evil-normal-state-tag   (propertize " Normal " 'face 'jp-modeline-indicator-cyan-bg)
+      evil-insert-state-tag   (propertize " Insert " 'face 'jp-modeline-indicator-yellow-bg)
+      evil-visual-state-tag   (propertize " Visual " 'face 'jp-modeline-indicator-red-bg)
+      evil-motion-state-tag   (propertize " Motion " 'face 'jp-modeline-indicator-cyan-bg)
+      evil-replace-state-tag  (propertize " Replace " 'face 'jp-modeline-indicator-green-bg)
+      evil-emacs-state-tag    (propertize " Emacs " 'face 'jp-modeline-indicator-magenta-bg)
+      evil-operator-state-tag (propertize " Operator " 'face 'jp-modeline-indicator-blue-bg))
+
 (use-package evil
   :config
   (evil-mode 1))
@@ -23,7 +38,6 @@
 (setq evil-want-keybinding nil)
 (setq evil-vsplit-window-right t)
 (setq evil-split-window-below t)
-(setq evil-mode-line-format nil)
 (setq evil-undo-system 'undo-redo)
 
 (defun jp/org-tab-dwim ()
@@ -70,14 +84,6 @@
   (define-key evil-motion-state-map (kbd "SPC") nil)
   (define-key evil-motion-state-map (kbd "RET") nil)
   (define-key evil-motion-state-map (kbd "TAB") nil))
-
-(setq evil-normal-state-tag   (propertize " Normal " 'face 'jp-modeline-indicator-cyan-bg)
-      evil-insert-state-tag   (propertize " Insert " 'face 'jp-modeline-indicator-yellow-bg)
-      evil-visual-state-tag   (propertize " Visual " 'face 'jp-modeline-indicator-red-bg)
-      evil-motion-state-tag   (propertize " Motion " 'face 'jp-modeline-indicator-cyan-bg)
-      evil-replace-state-tag  (propertize " Replace " 'face 'jp-modeline-indicator-green-bg)
-      evil-emacs-state-tag    (propertize " Emacs " 'face 'jp-modeline-indicator-magenta-bg)
-      evil-operator-state-tag (propertize " Operator " 'face 'jp-modeline-indicator-blue-bg))
 
 (setq evil-insert-state-message nil
       evil-visual-state-message nil

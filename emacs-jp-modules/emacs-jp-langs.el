@@ -83,12 +83,15 @@
 (global-so-long-mode 1)
 
 ;;;; Markdown (markdown-mode)
+;; Deferred: only loads when a Markdown file is opened.
 (use-package markdown-mode
+  :defer t
   :config
   (setq markdown-fontify-code-blocks-natively t))
 
 ;;;; csv-mode
-(use-package csv-mode)
+(use-package csv-mode
+  :defer t)
 
 ;;;; Flyspell and jp-spell.el (spell check)
 (require 'jp-spell)

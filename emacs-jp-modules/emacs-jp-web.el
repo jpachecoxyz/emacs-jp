@@ -72,10 +72,13 @@
   (define-key eww-mode-map (kbd "J") #'jp-eww-visit-url-on-page))
 
 ;;; Elfeed feed/RSS reader
+;; Deferred: `elfeed' is autoloaded and only loads when first invoked
+;; (C-c e).  `:bind' sets up C-c e as an autoloading trigger of `elfeed'
+;; so the key actually loads the package on first use.
 (use-package elfeed
+  :defer t
+  :bind (("C-c e" . elfeed))
   :config
-  (define-key global-map (kbd "C-c e") #'elfeed)
-
   (with-eval-after-load 'elfeed
     (add-hook 'elfeed-show-mode-hook #'visual-line-mode)
 
@@ -102,7 +105,10 @@
     (add-to-list 'elfeed-search-face-alist '(personal bold-italic))))
 
 ;;; Elfeed-org
+;; Loaded together with elfeed (whenever it is first opened), so the
+;; Org-configured feeds are registered before the reader is used.
 (use-package elfeed-org
+  :after elfeed
   :config
   (require 'elfeed-org)
   ;; is started with =M-x elfeed=

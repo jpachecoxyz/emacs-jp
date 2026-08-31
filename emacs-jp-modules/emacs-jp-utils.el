@@ -405,10 +405,9 @@ Opening and closing delimiters will have matching colors."
         (delete-window window)))))
 
 ;;; pdf-tools
-(use-package pdf-tools
-  :config
-  (require 'pdf-tools)
-  (pdf-loader-install))
+;; `pdf-loader-install' (which is autoloaded) makes Emacs load PDF
+;; Tools lazily, only once a PDF file is actually opened.
+(pdf-loader-install)
 
 (provide 'emacs-jp-utils)
 

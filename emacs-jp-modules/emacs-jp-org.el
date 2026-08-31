@@ -100,8 +100,8 @@
   (require 'org-tempo)
 
   (use-package ox-hugo
+    :defer t
     :config
-    (require 'ox-hugo)
     (with-eval-after-load 'ox
       (require 'ox-hugo))))
 
@@ -869,7 +869,12 @@ CUSTOM_ID of the entry is returned."
 (add-hook 'org-checkbox-statistics-hook #'ct/org-summary-checkbox-cookie)
 
 ;;; Org-msg
+;; Only needed when composing mail in Org.  Load it together with
+;; `mu4e' (which loads on demand), so its heavy gnus/message/HTML-export
+;; machinery does not slow down startup but `org-msg-mode' is active
+;; whenever mail is actually composed.
 (use-package org-msg
+  :after mu4e
   :config
   (setq mail-user-agent 'mu4e-user-agent)
   (require 'org-msg)
@@ -894,9 +899,11 @@ Regards,
   (org-msg-mode))
 
 ;;; Kanban
-(use-package org-kanban)
+(use-package org-kanban
+  :defer t)
 
-(use-package kanban)
+(use-package kanban
+  :defer t)
 
 ;;; Org-notify
 (use-package org-notify

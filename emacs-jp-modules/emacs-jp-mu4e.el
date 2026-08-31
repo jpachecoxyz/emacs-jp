@@ -7,7 +7,12 @@
 
 ;;; Code:
 
-(require 'mu4e)
+;; NOTE: mu4e is deliberately NOT required up front: it is a heavy
+;; package (plus gnus/message/org exporters) that is only needed when
+;; composing or reading mail.  All the mu4e-* options below are plain
+;; `setq' calls, which are cheap and effective before mu4e is ever
+;; loaded.  The heavy `require' and the notifications/modeline setup
+;; happen in the `with-eval-after-load 'mu4e' block near the bottom.
 
 ;;;; Mail sync
 (setq mu4e-get-mail-command "mbsync -a")
@@ -97,6 +102,13 @@
   (mu4e-headers-search "maildir:/disroot/INBOX"))
 
 ;;;; Keybindings
+;; `mu4e' is a built-in package that is NOT autoloaded by itself, so a
+;; plain global binding would fail with "wrong command" until mu4e is
+;; loaded.  Declare the commands as autoloaded from the `mu4e' file and
+;; bind them: pressing C-c m / C-x m loads mu4e on demand (which then
+;; runs the `with-eval-after-load 'mu4e' block below).
+(autoload 'mu4e "mu4e" nil t)
+(autoload 'mu4e-compose-new "mu4e" nil t)
 (keymap-global-set "C-c m" #'mu4e)
 (keymap-global-set "C-x m" #'mu4e-compose-new)
 
@@ -106,9 +118,10 @@
 ;;;; General settings
 (setq mu4e-confirm-quit nil)
 
-;;;; Mu4e Alert
-(use-package mu4e-alert
-  :config
+;; Everything that pulls in mu4e (and the gnus/message machinery behind
+;; it) is deferred until the mail client is actually used.
+(with-eval-after-load 'mu4e
+  ;;;; Mu4e Alert
   (require 'mu4e-alert)
 
   ;; estilo de notificación
@@ -132,11 +145,9 @@
             "")))     ; Nada si está vacío
 
   ;; 3. Asegúrate de que el refresco sea constante
-  (mu4e-alert-enable-mode-line-display))
+  (mu4e-alert-enable-mode-line-display)
 
-;;;; Org-contacts
-(use-package org-contacts
-  :config
+  ;;;; Org-contacts
   (require 'org-contacts)
 
   (setq org-contacts-files '("~/Documents/Emacs/org/agenda/contacts.org"))
@@ -148,11 +159,12 @@
 
   ;; Backend de autocompletado
   (setq mu4e-compose-complete-addresses-function #'mu4e--compose-complete-handler)
-  (add-to-list 'completion-at-point-functions #'org-contacts-message-complete-function))
+  (add-to-list 'completion-at-point-functions #'org-contacts-message-complete-function)
 
-(mu4e-modeline-mode 1)
-;; Si quieres que solo te avise de los correos en el INBOX:
-(setq mu4e-modeline-unread-items-query "flag:unread AND maildir:/disroot/INBOX")
+  ;;;; Modeline (mail unread counter)
+  (mu4e-modeline-mode 1)
+  ;; Si quieres que solo te avise de los correos en el INBOX:
+  (setq mu4e-modeline-unread-items-query "flag:unread AND maildir:/disroot/INBOX"))
 
 (provide 'emacs-jp-mu4e)
 

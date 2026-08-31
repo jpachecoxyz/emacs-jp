@@ -450,6 +450,7 @@
 
 ;;; Standard Unix Shell (M-x shell)
 (use-package vterm
+  :defer t
   :config
   ;; Start in insert state if using evil
   (add-hook 'vterm-mode-hook (lambda () (evil-insert-state)))
@@ -461,6 +462,7 @@
   (setq vterm-kill-buffer-on-exit t))
 
 (use-package vterm-toggle
+  :defer t
   :config
   (setq vterm-toggle-use-dedicated-buffer t)
   (setq vterm-toggle-fullscreen-p nil)

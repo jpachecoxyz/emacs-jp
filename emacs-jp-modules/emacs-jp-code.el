@@ -81,8 +81,10 @@
 
 ;;; Typst-mode
 ;; typst-ts-mode is installed from git in emacs-jp-00-requirements.el
-;; via `use-package :vc'; this declaration only configures it.
+;; via `use-package :vc'; this declaration only configures it.  Deferred
+;; so it only loads when a .typ file is actually opened.
 (use-package typst-ts-mode
+  :defer t
   :config
   (setq typst-ts-watch-options "--open")
 
@@ -91,10 +93,12 @@
     (keymap-set typst-ts-mode-map "C-c C-c" #'typst-ts-tmenu)))
 
 ;;; Lua
-(use-package lua-mode)
+(use-package lua-mode
+  :defer t)
 
 ;;; Arduino
-(use-package arduino-mode)
+(use-package arduino-mode
+  :defer t)
 
 (provide 'emacs-jp-code)
 

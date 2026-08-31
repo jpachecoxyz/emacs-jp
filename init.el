@@ -155,7 +155,7 @@
   :group 'jp-emacs
   :type 'boolean)
 
-(defcustom jp-emacs-enable-transparency t
+(defcustom jp-emacs-enable-transparency nil
   "Non-nil means to enable transparency support for the Emacs frame."
   :group 'jp-emacs
   :type 'boolean)

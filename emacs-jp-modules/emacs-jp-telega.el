@@ -6,9 +6,12 @@
 
 ;;; Code:
 
+;; Telega is a heavy client that is only needed on demand: everything
+;; here is deferred until `telega' is first invoked (there is no point
+;; dragging all of telega + its dozens of features into startup).
 (use-package telega
+  :defer t
   :config
-  (require 'telega)
   (setq telega-chat-input-markups '("org" "markdown2" nil))
 
   (setq telega-completing-read-function #'completing-read)
@@ -25,6 +28,7 @@
 (defun my/start-telega ()
   "Start `telega' inside a new perspective and activate 'telega-mode-line-mode'"
   (interactive)
+  (require 'telega)
   (if (fboundp 'persp-switch)
       (persp-switch "*telega*")
     (switch-to-buffer "*telega*"))
