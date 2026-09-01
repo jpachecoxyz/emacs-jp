@@ -5,12 +5,11 @@
 
 * About
 
-`emacs-jp' is my Emacs configuration.  It is a from-scratch reorganisation of
-my setup, migrating away from the Protesilaos-style custom macros
-(`jp-emacs-install', `jp-emacs-hook', `jp-emacs-keybind', ...) and towards the
-native, standard Emacs way of doing things: `use-package' everywhere, package
-archives for installation and `use-package :vc' for packages fetched straight
-from git.
+`emacs-jp' is my Emacs configuration, built through my experience and the
+power of AI. It represents a from-scratch reorganisation of my setup, moving
+towards the native, standard Emacs way of doing things: `use-package'
+everywhere, package archives for installation and `use-package :vc' for
+packages fetched straight from git.
 
 The configuration content is kept nearly identical to the original; what
 changed is the plumbing that sources and installs the packages.
