@@ -63,6 +63,22 @@
                                       (eager-update . t)
                                       (display-sort-function . identity))))))
 
+
+;;; Completion preview
+(use-package completion-preview
+  :ensure nil
+  :demand t
+  :bind
+  (:map completion-preview-active-mode-map
+        ("M-i" . completion-preview-insert-word)
+        ("M-n" . completion-preview-next-candidate)
+        ("M-p" . completion-preview-prev-candidate)
+        ("M-<return>" . completion-preview-insert)
+        ("<tab>" . completion-preview-complete))
+  :config
+  (setq completion-preview-minimum-symbol-length 2)
+  (global-completion-preview-mode))
+
 ;;; Orderless completion style (and jp-orderless.el)
 (when jp-emacs-completion-extras
   (use-package orderless
