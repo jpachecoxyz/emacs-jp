@@ -100,7 +100,7 @@
   (require 'org-tempo)
 
   (use-package ox-hugo
-    :defer t
+    ;; :defer t
     :config
     (with-eval-after-load 'ox
       (require 'ox-hugo))))
@@ -287,7 +287,7 @@
   (setq epa-pinentry-mode nil)
 
   ;; Automatically encrypt entries tagged with "crypt" before saving.
-  (add-hook 'before-save-hook 'org-crypt-use-before-save-magic)
+  (org-crypt-use-before-save-magic)
 
   ;; Keybindings for manual encryption/decryption.
   (define-key org-mode-map (kbd "C-c C-x e") 'org-encrypt-entries)

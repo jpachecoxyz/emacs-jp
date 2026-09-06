@@ -300,6 +300,10 @@ If already in the buffer, bury it. Otherwise, switch to it or launch Eshell."
 (defvar jp-presentation-mode nil
   "Non-nil when presentation mode is active.")
 
+(with-eval-after-load 'logos
+  (define-key logos-focus-mode-map (kbd "]") #'logos-forward-page-dwim)
+  (define-key logos-focus-mode-map (kbd "[") #'logos-backward-page-dwim))
+
 (defun jp-toggle-presentation-mode ()
   "Toggle presentation mode."
   (interactive)
