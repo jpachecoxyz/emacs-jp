@@ -229,8 +229,8 @@
 #+filetags: %s
 #+identifier: %s
 #+author: Ing. Javier Pacheco
-#+startup: showall\n
-\n\n")
+#+startup: showall
+\n")
     (setq denote-query-links-display-buffer-action
           '((display-buffer-same-window)))
     (setq denote-link--prepare-links-format "%s\n")
