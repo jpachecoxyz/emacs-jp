@@ -23,7 +23,8 @@
 
 (setq mu4e-contacts-file "~/Documents/Emacs/org/agenda/contacts.org")
 
-;; Autocompletado para org-contacts file
+;; We complete from `contacts.org' via `org-contacts' (see below), not
+;; from mu4e's cache of harvested mail addresses, so keep the latter off.
 (setq mu4e-compose-complete-addresses nil)
 
 ;;;; Identity
@@ -147,9 +148,28 @@
   ;; 3. Asegúrate de que el refresco sea constante
   (mu4e-alert-enable-mode-line-display)
 
-  ;;;; Org-contacts
+  ;;;; Org-contacts (address autocompletion from contacts.org)
   (require 'org-contacts)
 
+  ;; The heading regexps (`org-complex-heading-regexp' & co.) are
+  ;; buffer-local and only get a value once `org-set-regexps-and-options'
+  ;; runs for each buffer.  In long-lived sessions a contacts buffer can
+  ;; end up with them nil, and then `org-contacts-db' → `org-get-heading'
+  ;; / `org-entry-properties' blow up with "Wrong type argument:
+  ;; stringp, nil" while completing.  Rebuild the regexps for every
+  ;; contacts file before scanning them.
+  (advice-add 'org-contacts-db :around
+              (lambda (orig &rest args)
+                (dolist (file (org-contacts-files))
+                  (when (file-readable-p file)
+                    (with-current-buffer (find-file-noselect file)
+                      (when (not (and (boundp 'org-complex-heading-regexp)
+                                      (stringp org-complex-heading-regexp)))
+                        (org-set-regexps-and-options)))))
+                (apply orig args)))
+
+  ;; `org-contacts-complete-name' only offers entries that have an
+  ;; EMAIL property, so contacts without one are ignored automatically.
   (setq org-contacts-files '("~/Documents/Emacs/org/agenda/contacts.org"))
 
   (add-to-list 'mu4e-headers-actions
@@ -157,9 +177,22 @@
   (add-to-list 'mu4e-view-actions
                '("org-contact-add" . mu4e-action-add-org-contact) t)
 
-  ;; Backend de autocompletado
-  (setq mu4e-compose-complete-addresses-function #'mu4e--compose-complete-handler)
-  (add-to-list 'completion-at-point-functions #'org-contacts-message-complete-function)
+  ;; `org-contacts' installs `org-contacts-message-complete-function' in
+  ;; `message-mode-hook' and `mu4e-compose-mode-hook' (via
+  ;; `org-contacts-completion-enabled-mode-list'), but `org-msg-edit-mode'
+  ;; (which is derived from `org-mode') resets the buffer-local
+  ;; `completion-at-point-functions' when it takes over the compose buffer,
+  ;; so that CAPF is lost.  Instead, wire org-contacts into
+  ;; `message-completion-alist': `org-msg' exposes it through
+  ;; `message-completion-function' in every compose buffer, and it also
+  ;; covers plain `message-mode'.
+  (add-to-list 'message-completion-alist
+               (cons message-email-recipient-header-regexp
+                     #'org-contacts-message-complete-function))
+
+  ;; Keep mu4e's own harvested-address completion off so the two backends
+  ;; do not produce duplicates.
+  (setq mu4e-compose-complete-addresses nil)
 
   ;;;; Modeline (mail unread counter)
   (mu4e-modeline-mode 1)

@@ -123,6 +123,19 @@ Also see `jp-register-use-dwim'."
   "File to store registers to and retrieve from."
   :type 'file)
 
+(defun jp-register--strip-text-properties (val)
+  "Return VAL with all string text properties removed, recursively.
+Text properties printed by `prin1' may produce unreadable sexps (e.g.
+\"Odd length text property list\") which abort startup when reloading."
+  (pcase val
+    ((pred stringp) (substring-no-properties val))
+    ((pred vectorp) (apply #'vector
+                           (mapcar #'jp-register--strip-text-properties
+                                   (append val nil))))
+    ((pred consp) (cons (jp-register--strip-text-properties (car val))
+                        (jp-register--strip-text-properties (cdr val))))
+    (_ val)))
+
 (defun jp-register-store ()
   "Escribe `register-alist' al archivo, ignorando objetos complejos."
   (with-temp-file jp-register-save-file
@@ -139,7 +152,11 @@ Also see `jp-register-use-dwim'."
                     ;; Opcional: registrar posiciones simples de archivos nativos
                     (and (consp val) (eq (car val) 'file)))))
             register-alist)))
-      (pp printable-alist (current-buffer)))))
+      (pp (mapcar (lambda (reg)
+                    (cons (car reg)
+                          (jp-register--strip-text-properties (cdr reg))))
+                  printable-alist)
+          (current-buffer)))))
 
 (defun jp-register-load ()
   "Read `jp-register-save-file' and return its contents."

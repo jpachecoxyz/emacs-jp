@@ -381,7 +381,8 @@
            ((org-agenda-fontify-priorities nil)
             (org-agenda-files '("~/Documents/Emacs/org/agenda/agenda.org"
                                 "~/Documents/Emacs/org/agenda/bdays.org"
-                                "~/Documents/Emacs/org/agenda/important_dates.org"))
+                                "~/Documents/Emacs/org/agenda/important_dates.org"
+                                "~/Documents/Emacs/org/agenda/contacts.org"))
             (org-agenda-dim-blocked-tasks nil)))
 
           ("p" "Planning"
@@ -966,6 +967,253 @@ Regards,
                           :actions (my/org-notify-telegram-action-with-chat -notify/window -sound)))
 
   (org-notify-start))
+
+;;; Birthdays (mode line gift indicator)
+;; The birthday entries live in `bdays.org' as `org-anniversary' diary
+;; sexps.  We compute how many days remain until the next occurrence and
+;; use that both for a command that reports the nearest birthday and for
+;; the gift indicator shown in the mode line, right after the time.
+
+(defvar jp-org-birthdays-file "~/Documents/Emacs/org/agenda/bdays.org"
+  "File holding birthday entries in `org-anniversary' diary format.")
+
+(defvar jp-org-birthdays-warning-days 7
+  "Number of days in advance to warn about an upcoming birthday.")
+
+(defvar jp-org-birthdays-after-days 7
+  "Number of days to keep showing a birthday after it has passed.")
+
+(defvar jp-org--birthdays-cache nil
+  "Cache of parsed birthday entries.
+A cons cell (DAY . ENTRIES), where DAY is the value of `time-to-days'
+for the day the cache was built and ENTRIES is a list of entries of the
+form (NAME NEXT PREV), where NEXT is the number of days until the next
+occurrence and PREV the number of days since the last one.")
+
+(defun jp-org--birthday-offsets (month day)
+  "Return (NEXT . PREV) for the MONTH/DAY anniversary.
+NEXT is the number of days until the next occurrence and PREV the
+number of days since the last occurrence; both are 0 when the
+anniversary is today."
+  (let* ((now (current-time))
+         (year (decoded-time-year (decode-time now)))
+         (today (time-to-days now))
+         (this-year (time-to-days (encode-time 0 0 0 day month year))))
+    (cond
+     ((= today this-year) '(0 . 0))
+     ((< today this-year)
+      (cons (- this-year today)
+            (- today (time-to-days (encode-time 0 0 0 day month (1- year))))))
+     (t
+      (cons (- (time-to-days (encode-time 0 0 0 day month (1+ year))) today)
+            (- today this-year))))))
+
+(defun jp-org--birthdays-compute ()
+  "Parse `jp-org-birthdays-file' and compute the offsets for each entry."
+  (let (entries)
+    (when (file-readable-p jp-org-birthdays-file)
+      (with-temp-buffer
+        (insert-file-contents jp-org-birthdays-file)
+        (goto-char (point-min))
+        (while (re-search-forward
+                "%%(org-anniversary +\\([0-9]+\\) +\\([0-9]+\\) +\\([0-9]+\\)) *\\(.*\\)"
+                nil t)
+          (let* ((month (string-to-number (match-string 2)))
+                 (day (string-to-number (match-string 3)))
+                 (name (string-trim
+                        (replace-regexp-in-string
+                         " *[Nn]o\\. *%d.*\\'" ""
+                         (match-string 4))))
+                 (offsets (jp-org--birthday-offsets month day)))
+            (push (list (if (string-empty-p name) "Birthday" name)
+                        (car offsets)
+                        (cdr offsets))
+                  entries)))))
+    entries))
+
+(defun jp-org--birthdays ()
+  "Return the cached birthday entries, refreshing the cache once per day."
+  (let ((today (time-to-days (current-time))))
+    (unless (eq (car-safe jp-org--birthdays-cache) today)
+      (setq jp-org--birthdays-cache (cons today (jp-org--birthdays-compute))))
+    (cdr jp-org--birthdays-cache)))
+
+(defun jp-org--birthdays-invalidate ()
+  "Invalidate the birthday cache when the birthdays file is saved."
+  (when (and buffer-file-name
+             (file-equal-p buffer-file-name jp-org-birthdays-file))
+    (setq jp-org--birthdays-cache nil)))
+(add-hook 'after-save-hook #'jp-org--birthdays-invalidate)
+
+(defun jp-org--birthday-signed-days (next prev before after)
+  "Return the signed days for a birthday, or nil when it is not near.
+NEXT and PREV are days until and since the anniversary.  A birthday is
+near when it is within BEFORE days ahead or AFTER days behind; the
+result is positive when ahead and negative when behind."
+  (cond
+   ((<= next before) next)
+   ((<= prev after) (- prev))
+   (t nil)))
+
+(defun jp-org--birthday-label (days)
+  "Return a human-readable label for a birthday DAYS away.
+DAYS may be negative for a birthday that has already passed."
+  (cond
+   ((= days 0) "Today")
+   ((> days 0) (format "In %d day%s" days (if (= days 1) "" "s")))
+   (t (format "%d day%s ago" (- days) (if (= days -1) "" "s")))))
+
+(defun jp-org-upcoming-birthdays (&optional before after)
+  "Return birthdays near today.
+A birthday is included when it is within BEFORE days ahead or AFTER
+days behind.  BEFORE defaults to `jp-org-birthdays-warning-days' and
+AFTER to `jp-org-birthdays-after-days'.  Each element is a cons cell
+\(DAYS . NAME), where DAYS is negative for birthdays already passed.
+The list is sorted by the absolute number of days."
+  (let ((before (or before jp-org-birthdays-warning-days))
+        (after (or after jp-org-birthdays-after-days))
+        result)
+    (dolist (birthday (jp-org--birthdays))
+      (let ((days (jp-org--birthday-signed-days
+                   (nth 1 birthday) (nth 2 birthday) before after)))
+        (when days
+          (push (cons days (nth 0 birthday)) result))))
+    (sort result (lambda (a b) (< (abs (car a)) (abs (car b)))))))
+
+(defun jp-org-check-birthdays ()
+  "Report the birthdays near today.
+See `jp-org-upcoming-birthdays' for the window that is used."
+  (interactive)
+  (let ((birthdays (jp-org-upcoming-birthdays)))
+    (message "%s"
+             (if birthdays
+                 (mapconcat
+                  (lambda (birthday)
+                    (format "%s: %s"
+                            (jp-org--birthday-label (car birthday))
+                            (cdr birthday)))
+                  birthdays ", ")
+               (format "No birthdays between %d days ago and %d days ahead"
+                       jp-org-birthdays-after-days
+                       jp-org-birthdays-warning-days)))))
+
+(defun jp-org-open-birthdays ()
+  "Open `jp-org-birthdays-file'."
+  (interactive)
+  (find-file jp-org-birthdays-file))
+
+(defvar jp-org--birthdays-ack-file
+  (expand-file-name "var/jp-birthdays-acknowledged.el" user-emacs-directory)
+  "File to persist acknowledged birthdays.")
+
+(defvar jp-org--birthdays-acknowledged-alist nil
+  "Alist of acknowledged birthdays until their next occurrence.
+Each entry is (KEY . YEAR), where KEY is the birthday name and YEAR is
+the calendar year of the anniversary occurrence that was acknowledged.")
+
+(defun jp-org--birthdays-ack-load ()
+  "Load acknowledged birthdays from disk."
+  (when (file-readable-p jp-org--birthdays-ack-file)
+    (with-temp-buffer
+      (insert-file-contents jp-org--birthdays-ack-file)
+      (condition-case nil
+          (setq jp-org--birthdays-acknowledged-alist (read (current-buffer)))
+        (error nil)))))
+
+(defun jp-org--birthdays-ack-save ()
+  "Save acknowledged birthdays to disk."
+  (let ((dir (file-name-directory jp-org--birthdays-ack-file)))
+    (unless (file-directory-p dir)
+      (make-directory dir t)))
+  (with-temp-file jp-org--birthdays-ack-file
+    (prin1 jp-org--birthdays-acknowledged-alist (current-buffer))))
+
+(jp-org--birthdays-ack-load)
+(add-hook 'kill-emacs-hook #'jp-org--birthdays-ack-save)
+
+(defun jp-org--birthday-occurrence-year (days)
+  "Return the calendar year of the birthday occurrence that is DAYS away.
+DAYS may be positive (upcoming) or negative (already passed)."
+  (let* ((today-days (time-to-days (current-time)))
+         (occurrence-days (+ today-days days))
+         (occurrence-time (days-to-time occurrence-days)))
+    (decoded-time-year (decode-time occurrence-time))))
+
+(defun jp-org-birthdays-confirm ()
+  "Mark currently visible birthdays as done until their next anniversary."
+  (interactive)
+  (let ((today-days (time-to-days (current-time))))
+    (dolist (birthday (jp-org-upcoming-birthdays))
+      (let* ((days (car birthday))
+             (name (cdr birthday))
+             (occurrence-days (+ today-days days))
+             (occurrence-time (days-to-time occurrence-days))
+             (year (decoded-time-year (decode-time occurrence-time)))
+             (key name))
+        (setq jp-org--birthdays-acknowledged-alist
+              (cons (cons key year)
+                    (assq-delete-all key jp-org--birthdays-acknowledged-alist))))))
+  (jp-org--birthdays-ack-save)
+  (force-mode-line-update t))
+
+(defun jp-org-birthdays-show-menu (event)
+  "Show a popup menu for the birthday indicator on EVENT."
+  (interactive "e")
+  (let ((menu (make-sparse-keymap "Birthdays")))
+    (define-key menu [open]
+      '(menu-item "Open birthdays file" jp-org-open-birthdays
+                  :help "Open `jp-org-birthdays-file'"))
+    (define-key menu [confirm]
+      '(menu-item "Dismiss this birthday" jp-org-birthdays-confirm
+                  :help "Hide this birthday until its next anniversary"))
+    (popup-menu menu event)))
+
+(defvar jp-org-birthdays-mode-line-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mode-line down-mouse-1] #'jp-org-birthdays-show-menu)
+    map)
+  "Keymap for the birthday gift indicator in the mode line.")
+
+(defun jp-org-birthdays-mode-line ()
+  "Return the mode line gift indicator, or nil when no birthday is near."
+  (when-let* ((birthdays (jp-org-upcoming-birthdays)))
+    (let* ((today-days (time-to-days (current-time)))
+           (visible-birthdays
+            (cl-remove-if
+             (lambda (birthday)
+               (let* ((days (car birthday))
+                      (name (cdr birthday))
+                      (occurrence-days (+ today-days days))
+                      (occurrence-time (days-to-time occurrence-days))
+                      (year (decoded-time-year (decode-time occurrence-time)))
+                      (ack (assoc name jp-org--birthdays-acknowledged-alist)))
+                 (and ack (eq (cdr ack) year))))
+             birthdays)))
+      (when visible-birthdays
+        (propertize " 🎁 "
+                    'face 'jp-modeline-indicator-yellow
+                    'mouse-face 'mode-line-highlight
+                    'local-map jp-org-birthdays-mode-line-map
+                    'help-echo
+                    (concat
+                     (if (cdr visible-birthdays) "Birthdays:\n" "Birthday:\n")
+                     (mapconcat
+                      (lambda (birthday)
+                        (format "  %s: %s"
+                                (jp-org--birthday-label (car birthday))
+                                (cdr birthday)))
+                      visible-birthdays "\n")))))))
+
+(defvar jp-org-birthdays-mode-line-construct
+  '(:eval (jp-org-birthdays-mode-line))
+  "Mode line construct showing the upcoming-birthday gift indicator.")
+(put 'jp-org-birthdays-mode-line-construct 'risky-local-variable t)
+
+;; Show the gift indicator right after the time, which `display-time'
+;; places in `jp-modeline-misc-info'.
+(let ((cell (memq 'jp-modeline-misc-info (default-value 'mode-line-format))))
+  (when cell
+    (setcdr cell (cons 'jp-org-birthdays-mode-line-construct (cdr cell)))))
 
 (provide 'emacs-jp-org)
 

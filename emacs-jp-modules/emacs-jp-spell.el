@@ -11,6 +11,13 @@
 ;; Hunspell / Dictionaries
 ;;========================
 
+;; Emacs 30+ text modes add `ispell-completion-at-point' to
+;; `completion-at-point-functions'.  It needs a plain word-list file,
+;; which we do not have (we use hunspell + jinx), so it errors with "No
+;; plain word-list found" and interferes with Corfu.  Disable it: we get
+;; in-buffer completion from Corfu and spell checking from Jinx.
+(setq text-mode-ispell-word-completion nil)
+
 (setq ispell-program-name "hunspell")
 
 (setq ispell-hunspell-dict-paths-alist
