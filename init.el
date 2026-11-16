@@ -197,6 +197,7 @@
 (require 'emacs-jp-utils)
 (require 'emacs-jp-x0)
 (require 'emacs-jp-yasnippets)
+(require 'emacs-jp-kanban)
 (when (not (eq system-type 'windows-nt))
   (require 'emacs-jp-telega))
 
