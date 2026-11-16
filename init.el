@@ -193,6 +193,7 @@
 (require 'emacs-jp-icons)
 (require 'emacs-jp-general)
 (require 'emacs-jp-code)
+(require 'emacs-jp-latex)
 (require 'emacs-jp-utils)
 (require 'emacs-jp-x0)
 (require 'emacs-jp-yasnippets)
