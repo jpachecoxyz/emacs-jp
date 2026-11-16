@@ -198,8 +198,8 @@
 (require 'emacs-jp-x0)
 (require 'emacs-jp-yasnippets)
 (require 'emacs-jp-kanban)
-(when (not (eq system-type 'windows-nt))
-  (require 'emacs-jp-telega))
+;; (when (not (eq system-type 'windows-nt))
+;;   (require 'emacs-jp-telega))
 
 ;; The purpose of the "post customisations" is to evaluate arbitrary
 ;; code AFTER loading all my configurations.

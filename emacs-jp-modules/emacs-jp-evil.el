@@ -90,6 +90,20 @@
       evil-replace-state-message nil
       evil-motion-state-message nil)
 
+;;; Ex command history (":") with up/down arrows
+(with-eval-after-load 'evil-ex
+  ;; Guardar historial de comandos ":"
+  (setq evil-ex-history-file (expand-file-name "var/evil-ex-history" user-emacs-directory))
+  ;; Navegación con flechas en el minibuffer de evil-ex
+  (define-key evil-ex-map (kbd "<up>") #'previous-history-element)
+  (define-key evil-ex-map (kbd "<down>") #'next-history-element)
+  (define-key evil-ex-completion-map (kbd "<up>") #'previous-history-element)
+  (define-key evil-ex-completion-map (kbd "<down>") #'next-history-element))
+
+;; Persistir el historial de : con savehist
+(with-eval-after-load 'savehist
+  (add-to-list 'savehist-additional-variables 'evil-ex-history))
+
 (provide 'emacs-jp-evil)
 
 ;;; emacs-jp-evil.el ends here

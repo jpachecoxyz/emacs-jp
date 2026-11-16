@@ -311,7 +311,7 @@ If already in the buffer, bury it. Otherwise, switch to it or launch Eshell."
       (progn
         ;; Disable presentation
         (logos-focus-mode -1)
-        (fontaine-set-preset 'medium)
+        (fontaine-set-preset 'regular)
         (widen)
         (setq jp-presentation-mode nil)
         (message "Presentation mode disabled"))
